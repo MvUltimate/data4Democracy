@@ -1,5 +1,6 @@
 import streamlit as st
 from streamlit_image_select import image_select
+from database import get_connection
 
 # Dictionary of canton names and paths to their flag icons
 CANTONS = {
@@ -49,7 +50,6 @@ CANTON_INFO = {
     }
 }
 
-
 def render():
     st.markdown("<h1 style='text-align:center;'>🏛️ Choose Your Canton</h1>", unsafe_allow_html=True)
     st.write("---")
@@ -57,7 +57,6 @@ def render():
     canton_names = list(CANTONS.keys())
     image_paths = list(CANTONS.values())
 
-    # image_select returns the selected image path
     selected_image = image_select(
         label="Click on a flag to select a canton",
         images=image_paths,
@@ -65,7 +64,6 @@ def render():
         use_container_width=False
     )
 
-    # Map image path back to canton name
     selected = next((name for name, path in CANTONS.items() if path == selected_image), None)
     st.session_state.selected_canton = selected
 
@@ -76,10 +74,41 @@ def render():
         st.markdown("### ✍️ Submit a Request")
 
         with st.form("canton_request_form", clear_on_submit=True):
+            office_nom = st.selectbox("🏢 Office concerné par la demande de document", [
+                "Office fédéral de la santé publique (OFSP)",
+                "Office fédéral de la statistique (OFS)",
+                "Office fédéral de la police (fedpol)",
+                "Canton de Vaud – Département de la formation",
+                "Canton du Valais – Département de la sécurité",
+                "Office fédéral des transports (OFT)"
+            ])
             subject = st.text_input("Subject of your request")
             description = st.text_area("Describe what you're requesting")
             contact = st.text_input("Your email or contact info")
             submitted = st.form_submit_button("📤 Submit Request")
 
             if submitted:
-                st.success(f"✅ Your request to *{selected}* has been submitted!")
+                try:
+                    conn = get_connection()
+                    cursor = conn.cursor()
+
+                    cursor.execute("SELECT ID FROM Services WHERE Nom_Service = ?", (office_nom,))
+                    row = cursor.fetchone()
+
+                    if row:
+                        office_id = row[0]
+
+                        cursor.execute("""
+                            INSERT INTO RequetesUtilisateurs (ServiceID, RequeteTexte, Document)
+                            VALUES (?, ?, ?)
+                        """, (office_id, description, "En cours"))
+                        conn.commit()
+
+                        st.success(f"✅ Your request to *{selected}* has been submitted and saved.")
+                    else:
+                        st.error("❌ Office introuvable dans la base.")
+
+                except Exception as db_error:
+                    st.error(f"❌ Erreur base de données : {db_error}")
+                finally:
+                    conn.close()
