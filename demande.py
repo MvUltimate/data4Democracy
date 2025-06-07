@@ -39,10 +39,9 @@ def render():
                             st.write(response)
                         except Exception as e:
                             st.error(f"❌ Erreur lors de l'analyse du fichier : {e}")
+                    return
 
-                    prompt = (
-                        + f"\n\nUtilisateur : {user_query}\n\nGénère une demande formelle destinée à une administration suisse, conforme à la LTrans."
-                    )
+                    prompt = f"\n\nUtilisateur : {user_query}\n\nGénère une demande formelle destinée à une administration suisse, conforme à la LTrans."
 
                     with st.spinner("✍️ Rédaction de la demande..."):
                         demande = generate_admin_response(prompt)
