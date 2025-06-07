@@ -1,4 +1,4 @@
-# llm/upload_to_openai.py
+# rag/upload_to_openai.py (corrigé et à jour)
 
 import os
 import openai
@@ -20,21 +20,15 @@ def get_blob_bytes(blob_name: str) -> bytes:
 
 def upload_blob_to_openai(blob_name: str) -> str:
     blob_bytes = get_blob_bytes(blob_name)
-
     file = openai.files.create(
-        file=BytesIO(blob_bytes),
-        purpose="assistants",
+        file=(blob_name, BytesIO(blob_bytes)),
+        purpose="assistants"
     )
     return file.id
 
 
 def ask_about_file(blob_name: str, prompt: str) -> str:
-    blob_bytes = get_blob_bytes(blob_name)
-
-    file = openai.files.create(
-        file=BytesIO(blob_bytes),
-        purpose="assistants"
-    )
+    file_id = upload_blob_to_openai(blob_name)
 
     assistant = openai.beta.assistants.create(
         name="Analyseur de documents publics suisses",
@@ -45,21 +39,18 @@ def ask_about_file(blob_name: str, prompt: str) -> str:
 
     thread = openai.beta.threads.create()
 
-    # ✅ Crée un message sans file_ids
     openai.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
-        content=prompt
+        content=prompt,
+        attachments=[{"file_id": file_id, "tools": [{"type": "file_search"}]}]
     )
 
-    # ✅ Les fichiers doivent être passés ici dans `run`
     run = openai.beta.threads.runs.create(
         thread_id=thread.id,
-        assistant_id=assistant.id,
-        tool_choice="file_search",
+        assistant_id=assistant.id
     )
 
-    # Attente de la réponse
     while True:
         run_status = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
         if run_status.status == "completed":
@@ -70,4 +61,3 @@ def ask_about_file(blob_name: str, prompt: str) -> str:
 
     messages = openai.beta.threads.messages.list(thread_id=thread.id)
     return messages.data[0].content[0].text.value
-
