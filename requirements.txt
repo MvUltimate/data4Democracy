@@ -21,3 +21,5 @@ langchain-community>=0.0.20
 pymupdf>=1.23.0
 
 streamlit-image-select
+
+pyodbc>=0.1.0

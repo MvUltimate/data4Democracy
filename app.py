@@ -9,6 +9,7 @@ import maps
 import shared_docs
 import about
 import cantons
+import upload_page
 
 # Optional: inject custom CSS
 def local_css(file_name):
@@ -18,7 +19,7 @@ def local_css(file_name):
 def main():
     local_css("style.css")
 
-    menu = st.sidebar.selectbox("Menu", ["🏠 Home", "📄 Demande", "🗺️ Maps", "🗂️ Shared Documents","🏛️ Cantons", "ℹ️ About"])
+    menu = st.sidebar.selectbox("Menu", ["🏠 Home", "📄 Demande", "🗺️ Maps", "🗂️ Shared Documents","🏛️ Cantons", "ℹ️ About", "📤 Upload"])
 
     if menu == "🏠 Home":
         home.render()
@@ -38,6 +39,9 @@ def main():
     elif menu == "🏛️ Cantons":
         import cantons  # You can rename this file to `cantons.py` for consistency
         cantons.render()
+        
+    elif menu == "📤 Upload":
+        upload_page.render()
 
 if __name__ == "__main__":
     main()
