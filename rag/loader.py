@@ -15,30 +15,14 @@ def list_blob_urls() -> list[dict]:
     container = ContainerClient.from_container_url(AZURE_CONTAINER_URL)
     blobs = []
 
-    # Télécharge le fichier metadata.json
     try:
-        metadata_blob = container.get_blob_client("metadata.json")
-        metadata_content = metadata_blob.download_blob().readall()
-        metadata_dict = json.loads(metadata_content)
+        blob_list = container.list_blobs()
+        for blob in blob_list:
+            print(blob.name)  # ✅ Affiche uniquement le nom du fichier
     except Exception as e:
-        print(f"⚠️ Impossible de charger metadata.json : {e}")
-        metadata_dict = {}
+        print(f"Erreur lors du listage des blobs : {e}")
 
-    for blob in container.list_blobs():
-        try:
-            blob_url = f"{AZURE_CONTAINER_URL}/{blob.name}"
-            tags = metadata_dict.get(blob.name, {}).get("tags", [])
-            summary = summarize_filename(blob.name)
-            blobs.append({
-                "name": blob.name,
-                "url": blob_url,
-                "summary": summary,
-                "tags": tags
-            })
-        except Exception as e:
-            print(f"⚠️ Erreur lors du traitement du blob {blob.name} : {e}")
-
-    return blobs
+    return [{"name": blob.name} for blob in container.list_blobs()]
 
 
 def summarize_filename(filename: str) -> str:
