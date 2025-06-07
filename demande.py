@@ -17,16 +17,16 @@ def render():
     selected_blob = st.selectbox("📁 Fichier (optionnel)", ["-- Aucun --"] + blob_names)
 
     with st.form("demande_form", clear_on_submit=True):
-        title = st.text_input("🖊️ Sujet", placeholder="Exemple : Rapport financier 2024 de Sion")
         description = st.text_area("📖 Description", placeholder="Explique ce que tu cherches, pourquoi.")
         submit = st.form_submit_button("🚀 Générer la demande")
 
         if submit:
-            if not title or not description:
+            if not description:
                 st.warning("Merci de remplir tous les champs.")
                 return
 
-            user_query = f"Sujet : {title}\nDescription : {description}"
+            user_query = f"{description}"
+            print(f"🔍 Recherche pour : {user_query}")
 
             with st.spinner("🔍 Recherche en cours..."):
 
@@ -34,7 +34,15 @@ def render():
                     # 🔄 Envoie du fichier à OpenAI
                     with st.spinner(f"📡 Envoi du fichier « {selected_blob} » à ChatGPT..."):
                         try:
-                            response = ask_about_file(selected_blob, f"Lis le document et réponds à : {user_query}")
+                            prompt = f"""
+                                Tu es un assistant administratif suisse. L'utilisateur souhaite comprendre ou exploiter le document joint.
+
+                                Question de l'utilisateur :
+                                {user_query}
+
+                                Analyse le document en pièce jointe pour y répondre de manière précise, factuelle et concise. Si le document ne contient pas d'information suffisante, indique-le.
+                                """
+                            response = ask_about_file(selected_blob, prompt)
                             st.success("✅ Réponse basée sur le fichier :")
                             st.write(response)
                         except Exception as e:

@@ -21,13 +21,13 @@ def get_blob_bytes(blob_name: str) -> bytes:
 def upload_blob_to_openai(blob_name: str) -> str:
     blob_bytes = get_blob_bytes(blob_name)
     file = openai.files.create(
-        file=(blob_name, BytesIO(blob_bytes)),
+        file=(blob_name, BytesIO(blob_bytes)),  # ✅ Ajout du nom de fichier pour que OpenAI reconnaisse le type
         purpose="assistants"
     )
     return file.id
 
 
-def ask_about_file(blob_name: str, prompt: str) -> str:
+def ask_about_file(blob_name: str, user_query: str) -> str:
     file_id = upload_blob_to_openai(blob_name)
 
     assistant = openai.beta.assistants.create(
@@ -39,11 +39,21 @@ def ask_about_file(blob_name: str, prompt: str) -> str:
 
     thread = openai.beta.threads.create()
 
+    prompt = f"""
+    Tu es un assistant administratif suisse. L'utilisateur souhaite comprendre ou exploiter le document joint.
+
+    Question de l'utilisateur :
+    {user_query}
+
+    Analyse le document en pièce jointe pour y répondre de manière précise, factuelle et concise. 
+    Si le document ne contient pas d'information suffisante, indique-le.
+    """
+
     openai.beta.threads.messages.create(
         thread_id=thread.id,
         role="user",
         content=prompt,
-        attachments=[{"file_id": file_id, "tools": [{"type": "file_search"}]}]
+        attachments=[{"file_id": file_id, "tools": [{"type": "file_search"}]}]  # ✅ correction du type de tool
     )
 
     run = openai.beta.threads.runs.create(
