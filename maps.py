@@ -1,20 +1,53 @@
 import streamlit as st
 from streamlit_folium import st_folium
 import folium
+from map_points import points
 
 def render():
-    st.markdown("<h1 style='text-align:center;'>🗺️ Interactive Map</h1>", unsafe_allow_html=True)
-    st.write("Explore the map to view key locations related to projects or demands.")
-    st.write("---")
+    # Remove Streamlit default padding/margin
+    st.markdown("""
+        <style>
+        .block-container {
+            padding: 0;
+        }
+        .main {
+            padding: 0;
+        }
+        iframe {
+            height: 100vh !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-    location = [46.8182, 8.2275]  # Switzerland
+    # Fullscreen title (optional)
+    st.markdown("<h1 style='text-align:center; margin-top: 10px;'>🗺️ Carte des infrastructures publiques</h1>", unsafe_allow_html=True)
 
-    m = folium.Map(location=location, zoom_start=8, tiles="CartoDB positron")
+    # Initialize Leaflet map
+    m = folium.Map(location=[46.8182, 8.2275], zoom_start=7, tiles="CartoDB positron")
 
-    folium.Marker(
-        location=[46.9480, 7.4474],
-        popup="<b>Bern</b>",
-        icon=folium.Icon(color='blue', icon="info-sign")
-    ).add_to(m)
+    icon_map = {
+        "Bridge": ("blue", "road"),
+        "Gym Building": ("green", "glyphicon-plus"),
+        "Game Place": ("orange", "glyphicon-play"),
+        "State Building": ("red", "glyphicon-home"),
+        "Cultural Center": ("purple", "glyphicon-music")
+    }
 
-    st_folium(m, width=800, height=500)
+    for item in points:
+        color, icon = icon_map.get(item["type"], ("gray", "info-sign"))
+        doc_links = "<ul>" + "".join(
+            f"<li><a href='{doc['url']}' target='_blank'>{doc['title']}</a></li>" for doc in item["docs"]
+        ) + "</ul>"
+        popup_content = f"""
+            <b>{item['name']}</b><br>
+            Type: {item['type']}<br><br>
+            <b>📄 Documents liés:</b>{doc_links}
+        """
+        folium.Marker(
+            location=item["location"],
+            popup=folium.Popup(popup_content, max_width=300),
+            icon=folium.Icon(color=color, icon=icon, prefix='glyphicon')
+        ).add_to(m)
+
+    # Display fullscreen map
+    st_folium(m, width=None, height=800, use_container_width=True)
