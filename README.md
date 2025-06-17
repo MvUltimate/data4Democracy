@@ -46,6 +46,9 @@ Crée un fichier `.env` à la racine avec ta clé OpenAI :
 
 ```
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
+AZURE_BLOB_CONTAINER_WRITE_URL=""
+AZURE_BLOB_CONTAINER_READ_URL=""
+AZURE_BLOB_CONTAINER_URL=""
 ```
 
 ---
